@@ -1,0 +1,48 @@
+version: '3.9'
+
+secrets:
+  root_db_passwd:
+    file: root_db_password.txt
+  utente_db_passwd:
+    file: utente_db_password.txt
+
+networks:
+  progetto-prova-net-ws-sql:
+    driver: bridge
+
+volumes:
+  node_modules:
+
+services:
+  sql-progetto-prova:
+    image: mysql:latest
+    container_name: sql-progetto-prova
+    volumes:
+      - ./sql-server:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/root_db_passwd
+      MYSQL_DATABASE: dati-progetto
+      MYSQL_USER: utente
+      MYSQL_PASSWORD_FILE: /run/secrets/utente_db_passwd
+    networks:
+      - progetto-prova-net-ws-sql
+    ports:
+      - 3310:3306
+    secrets:
+      - root_db_passwd
+      - utente_db_passwd
+  ws-progetto-prova:
+    build: ./ws-server
+    container_name: ws-progetto-prova
+    working_dir: /app
+    networks:
+      - progetto-prova-net-ws-sql
+    ports:
+      - 3000:3000
+    tty: true
+    volumes:
+      - node_modules:/app/node_modules
+      - ./ws-server:/app
+    secrets:
+      - root_db_passwd
+      - utente_db_passwd
